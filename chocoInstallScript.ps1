@@ -1,13 +1,12 @@
 # use an internal repository to download Chocolatey nupkg to the local path:
- $packageRepo = 'https://chocolatey.org/api/v2/package/chocolatey'
+$packageRepo = 'https://chocolatey.org/api/v2/'
+# $packageRepo = 'https://chocolatey.org/api/v2/package/chocolatey'
 # uncomment if you want to download the file from a remote OData (HTTP/HTTPS) internal url (such as Artifactory, Nexus, ProGet, or Chocolatey.Server)
-# $searchUrl = ($packageRepo.Trim('/'), 'Packages()?$filter=(Id%20eq%20%27chocolatey%27)%20and%20IsLatestVersion') -join '/'
-
-$searchUrl = $packageRepo
-
+# packageRepo.Trim('/') : remove last '/' from $packageRepo
+$searchUrl = ($packageRepo.Trim('/'), 'Packages()?$filter=(Id%20eq%20%27chocolatey%27)%20and%20IsLatestVersion') -join '/'
 
 # UPDATE THIS PATH
-$localChocolateyPackageFilePath = 'c:\packages\chocolatey.0.10.0.nupkg'
+$localChocolateyPackageFilePath = 'c:\packages\chocolatey.0.10.11.nupkg'
 # Determine unzipping method
 # 7zip is the most compatible, but you need an internally hosted 7za.exe.
 # Make sure the version matches for the arguments as well.
@@ -23,7 +22,7 @@ $env:Path += ";$ChocoInstallPath"
 $DebugPreference = "Continue";
 # if you really want to see debugging output related to the
 # installation, uncomment the next line
-# $env:ChocolateyEnvironmentDebug = 'true'
+$env:ChocolateyEnvironmentDebug = 'true'
 
 function Get-Downloader {
 param (
@@ -82,7 +81,7 @@ param (
   [string]$url,
   [string]$file
  )
-  #Write-Output "Downloading $url to $file"
+  Write-Output "Downloading $url to $file"
   $downloader = Get-Downloader $url
 
   $downloader.DownloadFile($url, $file)
@@ -199,9 +198,14 @@ param (
 if (!(Test-Path $ChocoInstallPath)) {
   # download the package to the local path
   if ($searchUrl) {
-    Download-Package $searchUrl $localChocolateyPackageFilePath
+  #  Download-Package $searchUrl $localChocolateyPackageFilePath
   }
 
   # Install Chocolatey
   Install-LocalChocolateyPackage $localChocolateyPackageFilePath
+
+  # Remove chocolatey.org (community) packages source and add "Proginov" one
+  choco source remove -n chocolatey
+  choco source add -n "Proginov" -s "urlToCustomPackageSource"
+  choco 
 }
